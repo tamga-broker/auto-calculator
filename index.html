@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Калькулятор растаможки автомобиля</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f2f4f7;
+            font-family: Arial, sans-serif;
+            color: #222;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 26px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #111827;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #000;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #eefbf3;
+            border-radius: 14px;
+        }
+
+        .result h2 {
+            margin-top: 0;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .grand-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #198754;
+            font-size: 24px;
+            font-weight: bold;
+            color: #198754;
+        }
+
+        /* Связь с брокером */
+        .broker-contact {
+            margin-top: 22px;
+            padding-top: 20px;
+            border-top: 1px solid #b7dfc5;
+            text-align: center;
+        }
+
+        .broker-title {
+            margin-bottom: 12px;
+            font-size: 17px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .broker-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            background: #198754;
+            color: white !important;
+            text-decoration: none !important;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .broker-button:hover {
+            background: #157347;
+        }
+
+        .broker-phone {
+            margin-top: 9px;
+            font-size: 14px;
+            color: #667085;
+        }
+
+        .note {
+            margin-top: 18px;
+            font-size: 13px;
+            color: #667085;
+            line-height: 1.4;
+        }
+
+        .error {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff0f0;
+            color: #b42318;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Калькулятор растаможки</h1>
+
+    <div class="card">
+
+        <div class="field">
+            <label for="year">Год выпуска</label>
+            <input
+                type="number"
+                id="year"
+                placeholder="Например: 2020"
+                min="1950"
+                max="2026"
+            >
+        </div>
+
+        <div class="field">
+            <label for="engine">Объём двигателя, см³</label>
+            <input
+                type="number"
+                id="engine"
+                placeholder="Например: 1998"
+                min="1"
+            >
+        </div>
+
+        <div class="field">
+            <label for="fuel">Тип двигателя</label>
+            <select id="fuel">
+                <option value="petrol">Бензин</option>
+                <option value="diesel">Дизель</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="steering">Расположение руля</label>
+            <select id="steering">
+                <option value="left">Левый руль</option>
+                <option value="right">Правый руль</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="price">Стоимость автомобиля, ₽</label>
+            <input
+                type="number"
+                id="price"
+                placeholder="Например: 1500000"
+                min="0"
+            >
+        </div>
+
+        <button type="button" onclick="calculate()">
+            Рассчитать
+        </button>
+
+        <div id="error" class="error"></div>
+
+        <div id="result" class="result">
+
+            <h2>Результат</h2>
+
+            <div class="result-row">
+                <span>Возраст автомобиля:</span>
+                <strong id="ageResult"></strong>
+            </div>
+
+            <div class="result-row">
+                <span>Объём двигателя:</span>
+                <strong id="engineResult"></strong>
+            </div>
+
+            <div class="result-row">
+                <span>Руль:</span>
+                <strong id="steeringResult"></strong>
+            </div>
+
+            <div class="result-row">
+                <span>Ставка:</span>
+                <strong id="rateResult"></strong>
+            </div>
+
+            <div class="result-row">
+                <span>Таможенная пошлина:</span>
+                <strong id="customsResult"></strong>
+            </div>
+
+            <div class="result-row">
+                <span>Таможенный сбор (1%):</span>
+                <strong id="feeResult"></strong>
+            </div>
+
+            <div class="result-row grand-total">
+                <span>Итого к оплате:</span>
+                <strong id="totalResult"></strong>
+            </div>
+
+            <!-- БРОКЕР -->
+            <div class="broker-contact">
+
+                <div class="broker-title">
+                    Связаться с таможенным брокером
+                </div>
+
+                <a
+                    href="tel:+79407571212"
+                    class="broker-button"
+                >
+                    📞 +7 (940) 757-12-12
+                </a>
+
+                <div class="broker-phone">
+                    Нажмите, чтобы позвонить
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="note">
+            Расчёт является предварительным. Для окончательной суммы необходимо
+            учитывать действующие правила и другие возможные платежи.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function calculate() {
+
+    const year = Number(document.getElementById("year").value);
+    const engine = Number(document.getElementById("engine").value);
+    const steering = document.getElementById("steering").value;
+    const fuel = document.getElementById("fuel").value;
+    const price = Number(document.getElementById("price").value);
+
+    const error = document.getElementById("error");
+    const result = document.getElementById("result");
+
+    error.style.display = "none";
+    result.style.display = "none";
+
+    // Проверка данных
+    if (!year || !engine || !price) {
+        showError("Заполните все поля.");
+        return;
+    }
+
+    if (engine <= 0) {
+        showError("Введите правильный объём двигателя.");
+        return;
+    }
+
+    if (price <= 0) {
+        showError("Введите правильную стоимость автомобиля.");
+        return;
+    }
+
+    if (year < 1950 || year > 2026) {
+        showError("Введите правильный год выпуска.");
+        return;
+    }
+
+    // Возраст автомобиля
+    const currentYear = 2026;
+    const age = currentYear - year;
+
+    // Получаем ставку
+    let rate = getRate(age, engine, steering, fuel);
+
+    if (rate === null) {
+        showError(
+            "Для данного автомобиля ставка в текущей таблице не определена."
+        );
+        return;
+    }
+
+    // Основной расчёт
+    const customs = engine * rate;
+
+    // Таможенный сбор
+    const customsFee = price * 0.01;
+
+    // Общая сумма
+    const total = customs + customsFee;
+
+    // Вывод результата
+    document.getElementById("ageResult").textContent =
+        age + " лет";
+
+    document.getElementById("engineResult").textContent =
+        engine.toLocaleString("ru-RU") + " см³";
+
+    document.getElementById("steeringResult").textContent =
+        steering === "right"
+            ? "Правый"
+            : "Левый";
+
+    document.getElementById("rateResult").textContent =
+        rate.toLocaleString("ru-RU") + " ₽/см³";
+
+    document.getElementById("customsResult").textContent =
+        customs.toLocaleString("ru-RU") + " ₽";
+
+    document.getElementById("feeResult").textContent =
+        customsFee.toLocaleString("ru-RU") + " ₽";
+
+    document.getElementById("totalResult").textContent =
+        total.toLocaleString("ru-RU") + " ₽";
+
+    result.style.display = "block";
+}
+
+
+/*
+    Таблица ставок
+*/
+
+function getRate(age, engine, steering, fuel) {
+
+    let rate = null;
+
+    // БЕНЗИН
+    if (fuel === "petrol") {
+
+        // До 3 лет
+        if (age <= 3) {
+
+            if (engine <= 1500) {
+                rate = 8;
+            }
+
+            else if (engine <= 1800) {
+                rate = 8;
+            }
+
+            else if (engine <= 2300) {
+                rate = 6;
+            }
+
+            else if (engine <= 2800) {
+                rate = 6;
+            }
+
+            else if (engine <= 3000) {
+                rate = 2.5;
+            }
+
+            else {
+                rate = 8;
+            }
+
+            // Правый руль
+            if (steering === "right") {
+
+                if (engine <= 1800) {
+                    rate = 12;
+                }
+
+                else if (engine <= 2800) {
+                    rate = 9.5;
+                }
+
+                else if (engine <= 3000) {
+                    rate = 3.75;
+                }
+
+                else {
+                    rate = 12;
+                }
+            }
+        }
+
+        // От 3 до 5 лет
+        else if (age <= 5) {
+
+            rate = 7;
+
+            if (steering === "right") {
+                rate = 11;
+            }
+        }
+
+        // От 5 до 7 лет
+        else if (age <= 7) {
+
+            rate = 7;
+
+            if (steering === "right") {
+                rate = 11;
+            }
+        }
+
+        // Старше 7 лет
+        else {
+
+            rate = 6;
+
+            if (steering === "right") {
+                rate = 9.5;
+            }
+        }
+    }
+
+
+    // ДИЗЕЛЬ
+    else if (fuel === "diesel") {
+
+        // До 3 лет
+        if (age <= 3) {
+
+            if (engine <= 1500) {
+                rate = 8;
+            }
+
+            else if (engine <= 2500) {
+                rate = 8;
+            }
+
+            else {
+                rate = 8;
+            }
+
+            if (steering === "right") {
+                rate = 12;
+            }
+        }
+
+        // От 3 до 5 лет
+        else if (age <= 5) {
+
+            rate = 7;
+
+            if (steering === "right") {
+                rate = 11;
+            }
+        }
+
+        // От 5 до 7 лет
+        else if (age <= 7) {
+
+            rate = 7;
+
+            if (steering === "right") {
+                rate = 11;
+            }
+        }
+
+        // Старше 7 лет
+        else {
+
+            rate = 6;
+
+            if (steering === "right") {
+                rate = 9.5;
+            }
+        }
+    }
+
+    return rate;
+}
+
+
+function showError(message) {
+
+    const error = document.getElementById("error");
+
+    error.textContent = message;
+    error.style.display = "block";
+}
+
+</script>
+
+</body>
+</html>
